@@ -5,7 +5,6 @@ import { z } from "zod";
 import { motion, AnimatePresence } from "framer-motion";
 import { TextInput } from "./TextInput";
 import { PasswordInput } from "./PasswordInput";
-import { SecurityCodeInput } from "./SecurityCodeInput";
 import { ErrorAlert } from "../common/ErrorAlert";
 import { AuthButton } from "../common/AuthButton";
 
@@ -44,12 +43,6 @@ const registerSchema = z.object({
     })
     .refine(value => /[0-9]/.test(value), {
       message: "Debe contener al menos un número"
-    }),
-  security_code: z.string()
-    .min(6, "El código debe tener 6 caracteres")
-    .max(6, "El código debe tener 6 caracteres")
-    .refine(value => /^[A-Z0-9]{6}$/.test(value), {
-      message: "El código debe contener solo letras mayúsculas y números"
     })
 });
 
@@ -60,8 +53,7 @@ export function RegisterForm({ onRegisterSuccess }: RegisterFormProps) {
     nombre: "",
     apellido: "",
     email: "",
-    password: "",
-    security_code: ""
+    password: ""
   });
   const [errors, setErrors] = useState<Partial<Record<keyof RegisterFormData, string>>>({});
   const [isLoading, setIsLoading] = useState(false);
@@ -215,19 +207,6 @@ export function RegisterForm({ onRegisterSuccess }: RegisterFormProps) {
             onChange={handleChange}
           />
         </motion.div>
-
-        {/* Security Code */}
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.4, delay: 0.5 }}
-        >
-          <SecurityCodeInput
-            value={formData.security_code}
-            error={errors.security_code}
-            onChange={handleChange}
-          />
-        </motion.div>
       </div>
 
       <AnimatePresence>
@@ -245,7 +224,7 @@ export function RegisterForm({ onRegisterSuccess }: RegisterFormProps) {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, delay: 0.55 }}
+        transition={{ duration: 0.4, delay: 0.5 }}
         className="pt-2"
       >
         <AuthButton

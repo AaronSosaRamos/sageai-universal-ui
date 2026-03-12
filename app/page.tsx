@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { LoginScreen } from "./components/LoginScreen";
 import { RegisterScreen } from "./components/RegisterScreen";
 import { ChatHeader } from "./components/chat/ChatHeader";
@@ -17,16 +17,21 @@ import { useFileUpload } from "./hooks/useFileUpload";
 import { useDragAndDrop } from "./hooks/useDragAndDrop";
 
 export default function ChatScreen() {
-  const [token, setToken] = useState<string | null>(() => {
-    if (typeof window !== 'undefined') {
-      return sessionStorage.getItem('token');
-    }
-    return null;
-  });
+  const [token, setToken] = useState<string | null>(null);
+  const [isMounted, setIsMounted] = useState(false);
   const [view, setView] = useState<'login' | 'register'>('login');
   const [input, setInput] = useState("");
   const [currentThreadId, setCurrentThreadId] = useState<string | null>(null);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+
+  // Load token from sessionStorage only on client side after mount
+  useEffect(() => {
+    setIsMounted(true);
+    const storedToken = sessionStorage.getItem('token');
+    if (storedToken) {
+      setToken(storedToken);
+    }
+  }, []);
 
   // Initialize session with current thread
   const { sessionInfo, setSessionInfo, isInitializing, changeThread } = useSession(token, currentThreadId);
@@ -82,6 +87,13 @@ export default function ChatScreen() {
     onDrop: dragDrop.handleDrop,
   }), [dragDrop]);
 
+  // Show loading screen until component is mounted to avoid hydration mismatch
+  if (!isMounted) {
+    return (
+      <LoadingScreen message="Cargando..." />
+    );
+  }
+
   // Authentication views
   if (!token) {
     if (view === 'register') {
@@ -112,14 +124,15 @@ export default function ChatScreen() {
   }
 
   return (
-    <div 
-      className="fixed inset-0 overflow-hidden grid grid-cols-[auto_1fr] grid-rows-[auto_1fr_auto] bg-gradient-to-br from-slate-50 via-white to-emerald-50/30 relative"
+    <div
+      className="fixed inset-0 overflow-hidden grid grid-rows-[auto_1fr_auto] bg-gradient-to-br from-slate-50 via-white to-emerald-50/30 relative transition-[grid-template-columns] duration-300 ease-in-out"
+      style={{ gridTemplateColumns: isSidebarCollapsed ? "64px 1fr" : "320px 1fr" }}
       {...dragHandlers}
     >
       <DragDropOverlay isDragging={dragDrop.isDragging} />
       
       {/* Sidebar */}
-      <div className="row-span-3 m-0 p-0 overflow-hidden">
+      <div className="row-span-3 m-0 p-0 overflow-hidden min-w-0">
         <Sidebar 
           token={token} 
           currentThreadId={currentThreadId}

@@ -11,6 +11,8 @@ interface ChatInputProps {
   onChange: (value: string) => void;
   onSend: () => void;
   onFileSelect: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  /** Oculta el botón de adjuntar archivos (ej. chat con asistente personalizado) */
+  hideFileUpload?: boolean;
 }
 
 function ChatInputComponent({ 
@@ -20,7 +22,8 @@ function ChatInputComponent({
   isDragging,
   onChange, 
   onSend,
-  onFileSelect
+  onFileSelect,
+  hideFileUpload = false
 }: ChatInputProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -64,22 +67,24 @@ function ChatInputComponent({
         />
         
         <div className="flex items-end gap-2 p-3">
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            className={`p-2.5 rounded-xl transition-colors flex-shrink-0 ${
-              isUploading || isTyping
-                ? "bg-gray-100 cursor-not-allowed"
-                : "bg-gray-50 hover:bg-emerald-50"
-            }`}
-            disabled={isUploading || isTyping}
-          >
-            {isUploading ? (
-              <Loader2 className="w-5 h-5 text-emerald-600 animate-spin" />
-            ) : (
-              <Paperclip className="w-5 h-5 text-gray-600" />
-            )}
-          </button>
+          {!hideFileUpload && (
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className={`p-2.5 rounded-xl transition-colors flex-shrink-0 ${
+                isUploading || isTyping
+                  ? "bg-gray-100 cursor-not-allowed"
+                  : "bg-gray-50 hover:bg-emerald-50"
+              }`}
+              disabled={isUploading || isTyping}
+            >
+              {isUploading ? (
+                <Loader2 className="w-5 h-5 text-emerald-600 animate-spin" />
+              ) : (
+                <Paperclip className="w-5 h-5 text-gray-600" />
+              )}
+            </button>
+          )}
 
           <div className="flex-1 min-h-[44px] max-h-[200px] relative">
             <textarea
