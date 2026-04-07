@@ -167,13 +167,23 @@ export function useChatMessages({ token, sessionInfo }: UseChatMessagesProps) {
     });
     
     if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
+      const err = (await res.json().catch(() => ({}))) as {
+        detail?: unknown;
+        message?: string;
+        error?: string;
+      };
       console.error("Supervisor error response:", {
         status: res.status,
         statusText: res.statusText,
-        error: err
+        error: err,
       });
-      throw new Error(`Error ${res.status}: ${JSON.stringify(err)}`);
+      const msg =
+        err.message ||
+        (typeof err.detail === "string" ? err.detail : null) ||
+        (res.status === 429
+          ? "Has alcanzado el límite diario de interacciones. Vuelve mañana."
+          : `Error ${res.status}`);
+      throw new Error(msg);
     }
     
     const data = await res.json();
@@ -183,22 +193,28 @@ export function useChatMessages({ token, sessionInfo }: UseChatMessagesProps) {
 
   const sendMessage = useCallback(async (text: string, uploadedFiles: FileInfo[] = []) => {
     const trimmed = text.trim();
-    if (!trimmed) return;
+    const uploaded = uploadedFiles.filter((f) => f.status === "uploaded" && f.uploadedPath);
+    if (!trimmed && uploaded.length === 0) return;
+
+    const promptLine =
+      trimmed || "Analiza el contenido de los archivos adjuntos y responde según lo que el usuario necesite.";
 
     // Process URLs in the message
-    const messageWithUrlTypes = processUrlsForSending(trimmed);
+    const messageWithUrlTypes = processUrlsForSending(promptLine);
 
-    const fileUrls = uploadedFiles.map(f => ({
+    const fileUrls = uploaded.map((f) => ({
       url: api.defaults.baseURL + f.uploadedPath!,
       type: (() => {
-        if (f.type === 'image') return 'img';
-        if (f.type === 'audio') return 'mp3';
-        if (f.file.name.toLowerCase().endsWith('.pdf')) return 'pdf';
-        if (f.file.name.toLowerCase().endsWith('.docx')) return 'docx';
-        if (f.file.name.toLowerCase().endsWith('.xlsx')) return 'xlsx';
-        if (f.file.name.toLowerCase().endsWith('.xls')) return 'xls';
-        return 'other';
-      })()
+        const name = f.file.name.toLowerCase();
+        if (f.type === "image") return "img";
+        if (f.type === "audio") return "mp3";
+        if (name.endsWith(".pdf")) return "pdf";
+        if (name.endsWith(".docx")) return "docx";
+        if (name.endsWith(".doc")) return "doc";
+        if (name.endsWith(".xlsx")) return "xlsx";
+        if (name.endsWith(".xls")) return "xls";
+        return "other";
+      })(),
     }));
 
     const fileInfo = fileUrls.length > 0 

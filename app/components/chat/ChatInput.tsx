@@ -9,10 +9,14 @@ interface ChatInputProps {
   isUploading: boolean;
   isDragging: boolean;
   onChange: (value: string) => void;
-  onSend: () => void;
+  onSend: () => void | Promise<void>;
   onFileSelect: (e: React.ChangeEvent<HTMLInputElement>) => void;
   /** Oculta el botón de adjuntar archivos (ej. chat con asistente personalizado) */
   hideFileUpload?: boolean;
+  /** Permite enviar con solo archivos (sin texto) */
+  hasUploadedFiles?: boolean;
+  /** accept del input file (p. ej. PDF, Word, Excel) */
+  accept?: string;
 }
 
 function ChatInputComponent({ 
@@ -23,7 +27,9 @@ function ChatInputComponent({
   onChange, 
   onSend,
   onFileSelect,
-  hideFileUpload = false
+  hideFileUpload = false,
+  hasUploadedFiles = false,
+  accept,
 }: ChatInputProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -39,23 +45,23 @@ function ChatInputComponent({
   const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      if (value.trim() && !isTyping && !isUploading) {
+      if ((value.trim() || hasUploadedFiles) && !isTyping && !isUploading) {
         onSend();
       }
     }
-  }, [value, isTyping, isUploading, onSend]);
+  }, [value, hasUploadedFiles, isTyping, isUploading, onSend]);
 
-  const canSend = value.trim() && !isTyping && !isUploading;
+  const canSend = (value.trim().length > 0 || hasUploadedFiles) && !isTyping && !isUploading;
 
   return (
     <div className="pb-6 shrink-0 flex flex-col gap-3">
       <div
         className={`relative rounded-2xl border-2 shadow-lg overflow-hidden transition-all duration-200 ${
           isDragging 
-            ? "border-emerald-400 bg-emerald-50/80" 
+            ? "border-emerald-400 bg-emerald-900/20" 
             : isFocused
-            ? "border-emerald-400 bg-white"
-            : "border-gray-200 bg-white"
+            ? "border-emerald-500 bg-slate-800"
+            : "border-slate-700 bg-slate-800"
         }`}
       >
         <input
@@ -64,6 +70,7 @@ function ChatInputComponent({
           multiple
           className="hidden"
           onChange={onFileSelect}
+          accept={accept}
         />
         
         <div className="flex items-end gap-2 p-3">
@@ -73,15 +80,15 @@ function ChatInputComponent({
               onClick={() => fileInputRef.current?.click()}
               className={`p-2.5 rounded-xl transition-colors flex-shrink-0 ${
                 isUploading || isTyping
-                  ? "bg-gray-100 cursor-not-allowed"
-                  : "bg-gray-50 hover:bg-emerald-50"
+                  ? "bg-slate-700 cursor-not-allowed"
+                  : "bg-slate-700 hover:bg-slate-600"
               }`}
               disabled={isUploading || isTyping}
             >
               {isUploading ? (
                 <Loader2 className="w-5 h-5 text-emerald-600 animate-spin" />
               ) : (
-                <Paperclip className="w-5 h-5 text-gray-600" />
+                <Paperclip className="w-5 h-5 text-slate-300" />
               )}
             </button>
           )}
@@ -96,7 +103,7 @@ function ChatInputComponent({
               onFocus={() => setIsFocused(true)}
               onBlur={() => setIsFocused(false)}
               placeholder="Escribe tu mensaje..."
-              className="w-full resize-none bg-transparent outline-none py-2.5 px-3 text-gray-900 text-sm overflow-y-auto rounded-xl transition-all placeholder:text-gray-400"
+              className="w-full resize-none bg-transparent outline-none py-2.5 px-3 text-white text-sm overflow-y-auto rounded-xl transition-all placeholder:text-slate-500"
               style={{
                 minHeight: '44px',
                 maxHeight: '200px'
@@ -112,7 +119,7 @@ function ChatInputComponent({
             className={`px-5 py-2.5 rounded-xl font-semibold text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-2 flex-shrink-0 ${
               canSend 
                 ? "bg-gradient-to-r from-emerald-600 to-teal-600 shadow-md hover:shadow-lg hover:scale-105" 
-                : "bg-gray-400"
+                : "bg-slate-600"
             }`}
           >
             {isTyping ? (
@@ -130,15 +137,15 @@ function ChatInputComponent({
         </div>
       </div>
       
-      <div className="flex items-center justify-center gap-2 text-xs text-gray-500">
+      <div className="flex items-center justify-center gap-2 text-xs text-slate-500">
         {isDragging ? (
           <>
-            <Sparkles className="w-3 h-3 text-emerald-600" />
-            <span className="text-emerald-700 font-medium">Suelta los archivos aquí</span>
+            <Sparkles className="w-3 h-3 text-emerald-400" />
+            <span className="text-emerald-400 font-medium">Suelta los archivos aquí</span>
           </>
         ) : (
           <span>
-            Presiona <kbd className="px-1.5 py-0.5 bg-gray-100 rounded text-gray-700 font-mono text-xs">Enter</kbd> para enviar
+            Presiona <kbd className="px-1.5 py-0.5 bg-slate-700 rounded text-slate-300 font-mono text-xs">Enter</kbd> para enviar
           </span>
         )}
       </div>

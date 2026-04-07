@@ -36,6 +36,10 @@ export default function EditAssistantPage() {
         const res = await fetch(`/api/assistants/${id}`, { headers: { Token: token } });
         if (!res.ok) throw new Error("No encontrado");
         const d = await res.json();
+        if (d.is_owner === false) {
+          window.location.replace(`/assistants/${id}/chat`);
+          return;
+        }
         setName(d.name);
         setDescription(d.description || "");
         setSystemPrompt(d.system_prompt || "");

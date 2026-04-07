@@ -13,12 +13,15 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ConfirmDialog } from "../common/ConfirmDialog";
+import { canCreateAssistants } from "@/lib/userType";
 
 interface AssistantItem {
   id: string;
   name: string;
   description: string;
   updated_at: string;
+  source?: string;
+  is_owner?: boolean;
 }
 
 interface AssistantSidebarProps {
@@ -45,18 +48,36 @@ export function AssistantSidebar({
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const allowNewAssistant = canCreateAssistants(token);
 
   const fetchAssistants = useCallback(async () => {
     if (!token) return;
     setIsLoading(true);
     try {
-      const res = await fetch("/api/assistants?page=1&limit=100", {
-        headers: { Token: token },
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setAssistants(data.items || []);
+      const [mineRes, catRes] = await Promise.all([
+        fetch("/api/assistants?page=1&limit=100&scope=mine", {
+          headers: { Token: token },
+        }),
+        fetch("/api/assistants?page=1&limit=100&scope=catalog", {
+          headers: { Token: token },
+        }),
+      ]);
+      const mine = mineRes.ok ? (await mineRes.json()).items || [] : [];
+      const catalog = catRes.ok ? (await catRes.json()).items || [] : [];
+      const byId = new Map<string, AssistantItem>();
+      for (const a of catalog as AssistantItem[]) {
+        byId.set(a.id, { ...a, source: a.source || "catalog" });
       }
+      for (const a of mine as AssistantItem[]) {
+        byId.set(a.id, { ...a, source: "mine" });
+      }
+      setAssistants(
+        Array.from(byId.values()).sort((x, y) => {
+          const tx = new Date(x.updated_at).getTime();
+          const ty = new Date(y.updated_at).getTime();
+          return ty - tx;
+        })
+      );
     } catch {
       setAssistants([]);
     } finally {
@@ -137,13 +158,15 @@ export function AssistantSidebar({
                 <Bot className="w-5 h-5 text-emerald-400" />
                 <h2 className="text-lg font-bold text-white">Asistentes</h2>
               </div>
-              <Link
-                href="/assistants/new"
-                className="p-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white transition-colors"
-                title="Nuevo asistente"
-              >
-                <Plus className="w-5 h-5" />
-              </Link>
+              {allowNewAssistant && (
+                <Link
+                  href="/assistants/new"
+                  className="p-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white transition-colors"
+                  title="Nuevo asistente"
+                >
+                  <Plus className="w-5 h-5" />
+                </Link>
+              )}
             </div>
 
             <div className="relative">
@@ -181,7 +204,7 @@ export function AssistantSidebar({
                   <p className="text-slate-400 text-sm mb-2">
                     {searchQuery ? "No se encontraron asistentes" : "No hay asistentes"}
                   </p>
-                  {!searchQuery && (
+                  {!searchQuery && allowNewAssistant && (
                     <Link
                       href="/assistants/new"
                       className="mt-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-sm font-medium transition-colors"
@@ -219,7 +242,7 @@ export function AssistantSidebar({
                         />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between mb-1">
+                        <div className="flex items-center justify-between mb-1 gap-1">
                           <p
                             className={`text-sm font-medium truncate ${
                               currentAssistantId === assistant.id ? "text-white" : "text-slate-200"
@@ -227,6 +250,11 @@ export function AssistantSidebar({
                           >
                             {assistant.name}
                           </p>
+                          {assistant.source === "catalog" && (
+                            <span className="text-[10px] uppercase tracking-wide text-emerald-400/90 flex-shrink-0">
+                              Catálogo
+                            </span>
+                          )}
                           <span className="text-xs text-slate-500 flex-shrink-0 ml-1">
                             {formatDate(assistant.updated_at)}
                           </span>
@@ -290,13 +318,15 @@ export function AssistantSidebar({
         </>
       ) : (
         <div className="flex flex-col items-center py-4 gap-4 h-full">
-          <Link
-            href="/assistants/new"
-            className="p-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white transition-colors"
-            title="Nuevo asistente"
-          >
-            <Plus className="w-5 h-5" />
-          </Link>
+          {allowNewAssistant && (
+            <Link
+              href="/assistants/new"
+              className="p-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white transition-colors"
+              title="Nuevo asistente"
+            >
+              <Plus className="w-5 h-5" />
+            </Link>
+          )}
           <div className="flex-1 overflow-y-auto custom-scrollbar-dark w-full pb-16">
             {filteredAssistants.slice(0, 10).map((assistant) => (
               <motion.button

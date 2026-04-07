@@ -125,7 +125,7 @@
 .custom-scrollbar {
   scrollbar-gutter: stable;
   scrollbar-width: thin;
-  scrollbar-color: rgba(5, 150, 105, 0.3) transparent;
+  scrollbar-color: rgba(16, 185, 129, 0.25) transparent;
 }
 
 .custom-scrollbar::-webkit-scrollbar {
@@ -139,14 +139,14 @@
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, #059669 0%, #10b981 100%);
+  background: rgba(16, 185, 129, 0.25);
   border-radius: 10px;
   border: 1px solid transparent;
   background-clip: padding-box;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, #047857 0%, #059669 100%);
+  background: rgba(16, 185, 129, 0.45);
 }
 
 /* Scrollbar para sidebar oscuro */

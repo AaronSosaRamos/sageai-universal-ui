@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, memo, useCallback, useMemo } from "react";
-import { Copy, Check, MoreVertical, ThumbsUp, ThumbsDown } from "lucide-react";
+import { Copy, Check, MoreVertical, ThumbsUp, ThumbsDown, FileText, FileDown, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -26,6 +26,11 @@ export type ChatMessage = {
   timestamp: number;
 };
 
+/** Quita solo para pantalla el anexo automático "Files:" (URLs al backend siguen en `message.text`). */
+function stripFilesAppendixForDisplay(text: string): string {
+  return text.replace(/\r?\n\r?\nFiles:\r?\n[\s\S]*$/i, "");
+}
+
 interface MessageBubbleProps {
   message: ChatMessage;
 }
@@ -34,6 +39,7 @@ function MessageBubbleComponent({ message }: MessageBubbleProps) {
   const isUser = message.sender === "user";
   const [copied, setCopied] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
+  const [exporting, setExporting] = useState<"docx" | "pdf" | null>(null);
   
   const containerWidthClasses = isUser
     ? "max-w-[88%] sm:max-w-[80%] md:max-w-[70%] lg:max-w-[60%]"
@@ -49,6 +55,56 @@ function MessageBubbleComponent({ message }: MessageBubbleProps) {
       // noop
     }
   }, [message.text]);
+
+  const handleExport = useCallback(
+    async (format: "docx" | "pdf") => {
+      setExporting(format);
+      setShowMenu(false);
+      try {
+        const token =
+          typeof window !== "undefined" ? sessionStorage.getItem("token") : null;
+        if (!token) throw new Error("Sesión no válida. Vuelve a iniciar sesión.");
+
+        const res = await fetch("/api/export/response", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Token: token,
+          },
+          body: JSON.stringify({
+            content: message.text,
+            format,
+            title: `sageai-${new Date(message.timestamp).toISOString().slice(0, 10)}`,
+          }),
+        });
+
+        if (!res.ok) {
+          const d = (await res.json().catch(() => ({}))) as { error?: string };
+          throw new Error(d.error || "Error al exportar");
+        }
+
+        const blob = await res.blob();
+        const cd = res.headers.get("Content-Disposition");
+        let filename = `export.${format}`;
+        if (cd) {
+          const m = /filename="([^"]+)"/.exec(cd) ?? /filename=([^;\s]+)/.exec(cd);
+          if (m) filename = m[1].trim();
+        }
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = filename;
+        a.click();
+        URL.revokeObjectURL(url);
+      } catch (e) {
+        console.error(e);
+        window.alert(e instanceof Error ? e.message : "No se pudo exportar");
+      } finally {
+        setExporting(null);
+      }
+    },
+    [message.text, message.timestamp]
+  );
 
   const preprocessMath = useCallback((text: string): string => {
     let out = text.replace(/\r\n?/g, "\n");
@@ -96,7 +152,10 @@ function MessageBubbleComponent({ message }: MessageBubbleProps) {
     return out;
   }, []);
   
-  const processedText = useMemo(() => preprocessMath(message.text), [message.text, preprocessMath]);
+  const processedText = useMemo(() => {
+    const raw = isUser ? stripFilesAppendixForDisplay(message.text) : message.text;
+    return preprocessMath(raw);
+  }, [message.text, isUser, preprocessMath]);
   
   return (
     <motion.div
@@ -150,14 +209,40 @@ function MessageBubbleComponent({ message }: MessageBubbleProps) {
                       </>
                     )}
                   </button>
+                  <button
+                    type="button"
+                    disabled={exporting !== null}
+                    onClick={() => handleExport("docx")}
+                    className="w-full px-3 py-2 text-left text-xs text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors disabled:opacity-50"
+                  >
+                    {exporting === "docx" ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <FileText className="w-3.5 h-3.5" />
+                    )}
+                    <span>Exportar Word (.docx)</span>
+                  </button>
+                  <button
+                    type="button"
+                    disabled={exporting !== null}
+                    onClick={() => handleExport("pdf")}
+                    className="w-full px-3 py-2 text-left text-xs text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors disabled:opacity-50"
+                  >
+                    {exporting === "pdf" ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <FileDown className="w-3.5 h-3.5" />
+                    )}
+                    <span>Exportar PDF</span>
+                  </button>
                   {!isUser && (
                     <>
                       <div className="border-t border-gray-200" />
-                      <button className="w-full px-3 py-2 text-left text-xs text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors">
+                      <button type="button" className="w-full px-3 py-2 text-left text-xs text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors">
                         <ThumbsUp className="w-3.5 h-3.5" />
                         <span>Útil</span>
                       </button>
-                      <button className="w-full px-3 py-2 text-left text-xs text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors">
+                      <button type="button" className="w-full px-3 py-2 text-left text-xs text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors">
                         <ThumbsDown className="w-3.5 h-3.5" />
                         <span>No útil</span>
                       </button>

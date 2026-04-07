@@ -6,8 +6,10 @@ import { ChatHeader } from "@/app/components/chat/ChatHeader";
 import { ChatFooter } from "@/app/components/chat/ChatFooter";
 import { SystemPromptPreview } from "@/app/components/assistants/SystemPromptPreview";
 import Link from "next/link";
+import { canCreateAssistants } from "@/lib/userType";
 
-const ACCEPTED_TYPES = ".pdf,.docx,.doc,.jpg,.jpeg,.png,.gif,.webp";
+const ACCEPTED_TYPES = ".pdf,.docx,.doc,.xlsx,.xls,.jpg,.jpeg,.png,.gif,.webp";
+const MAX_FILE_BYTES = 2 * 1024 * 1024;
 
 export default function NewAssistantPage() {
   const [token, setToken] = useState<string | null>(null);
@@ -40,6 +42,12 @@ export default function NewAssistantPage() {
     async (e: React.ChangeEvent<HTMLInputElement>) => {
       const selected = Array.from(e.target.files || []);
       if (selected.length === 0) return;
+      const tooBig = selected.filter((f) => f.size > MAX_FILE_BYTES);
+      if (tooBig.length > 0) {
+        setError(`Cada archivo debe ser de como máximo 2 MB: ${tooBig.map((f) => f.name).join(", ")}`);
+        e.target.value = "";
+        return;
+      }
       let s = session;
       if (!s && token) {
         try {
@@ -88,7 +96,7 @@ export default function NewAssistantPage() {
 
   const handleGenerate = async () => {
     if (!token || files.length === 0) {
-      setError("Sube al menos un archivo (PDF, DOCX o imagen)");
+      setError("Sube al menos un archivo (PDF, Word, Excel o imagen)");
       return;
     }
     setGenerating(true);
@@ -140,6 +148,16 @@ export default function NewAssistantPage() {
   };
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
+    const t = sessionStorage.getItem("token");
+    if (!t) {
+      window.location.href = "/";
+      return;
+    }
+    if (!canCreateAssistants(t)) {
+      window.location.replace("/assistants/catalog");
+      return;
+    }
     initSession();
   }, [initSession]);
 

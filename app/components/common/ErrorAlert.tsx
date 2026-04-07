@@ -19,7 +19,7 @@ export function ErrorAlert({ message }: ErrorAlertProps) {
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, y: -10, scale: 0.95 }}
       transition={{ type: "spring", stiffness: 300, damping: 30 }}
-      className="rounded-xl bg-red-50 border-2 border-red-200 p-4 shadow-sm"
+      className="rounded-xl bg-red-950/50 border-2 border-red-700/60 p-4 shadow-sm"
     >
       <div className="flex items-start">
         <motion.div
@@ -31,7 +31,7 @@ export function ErrorAlert({ message }: ErrorAlertProps) {
           <AlertCircle className="h-5 w-5 text-red-500" />
         </motion.div>
         <div className="ml-3 flex-1">
-          <p className="text-sm font-medium text-red-800">{message}</p>
+          <p className="text-sm font-medium text-red-300">{message}</p>
         </div>
         <motion.button
           onClick={() => setIsVisible(false)}

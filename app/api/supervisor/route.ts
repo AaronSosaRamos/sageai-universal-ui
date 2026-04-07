@@ -37,7 +37,18 @@ export async function POST(request: Request): Promise<Response> {
 
     if (!supRes.ok) {
       const err = await safeJson(supRes);
-      return Response.json({ error: "Error al consultar supervisor", detail: err }, { status: 500 });
+      const detail =
+        typeof err === "object" && err !== null && "detail" in err
+          ? String((err as { detail?: unknown }).detail ?? "")
+          : "";
+      return Response.json(
+        {
+          error: "Error al consultar supervisor",
+          detail: err,
+          message: detail || undefined,
+        },
+        { status: supRes.status }
+      );
     }
 
     const data = (await supRes.json()) as { response: string };

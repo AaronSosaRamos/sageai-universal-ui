@@ -2,7 +2,6 @@
 
 import { useState, useMemo, useCallback, useEffect } from "react";
 import { LoginScreen } from "./components/LoginScreen";
-import { RegisterScreen } from "./components/RegisterScreen";
 import { ChatHeader } from "./components/chat/ChatHeader";
 import { Sidebar } from "./components/chat/Sidebar";
 import { MessageList } from "./components/chat/MessageList";
@@ -19,7 +18,6 @@ import { useDragAndDrop } from "./hooks/useDragAndDrop";
 export default function ChatScreen() {
   const [token, setToken] = useState<string | null>(null);
   const [isMounted, setIsMounted] = useState(false);
-  const [view, setView] = useState<'login' | 'register'>('login');
   const [input, setInput] = useState("");
   const [currentThreadId, setCurrentThreadId] = useState<string | null>(null);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -54,13 +52,17 @@ export default function ChatScreen() {
   // Drag and drop
   const dragDrop = useDragAndDrop(fileUpload.handleFiles);
 
-  const handleSendMessage = useCallback(() => {
+  const handleSendMessage = useCallback(async () => {
     const trimmed = input.trim();
-    if (!trimmed) return;
+    const readyFiles = fileUpload.uploadedFiles.filter(
+      (f) => f.status === "uploaded" && f.uploadedPath
+    );
+    if (!trimmed && readyFiles.length === 0) return;
 
-    sendMessage(trimmed, fileUpload.uploadedFiles);
+    await sendMessage(trimmed, fileUpload.uploadedFiles);
     setInput("");
-  }, [input, sendMessage, fileUpload.uploadedFiles]);
+    await fileUpload.clearAllFiles();
+  }, [input, sendMessage, fileUpload.uploadedFiles, fileUpload]);
 
   const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -96,20 +98,7 @@ export default function ChatScreen() {
 
   // Authentication views
   if (!token) {
-    if (view === 'register') {
-      return (
-        <RegisterScreen
-          onBack={() => setView('login')}
-          onRegisterSuccess={() => setView('login')}
-        />
-      );
-    }
-    return (
-      <LoginScreen
-        onLoginSuccess={setToken}
-        onRegister={() => setView('register')}
-      />
-    );
+    return <LoginScreen onLoginSuccess={setToken} />;
   }
 
   // Loading state
@@ -125,7 +114,7 @@ export default function ChatScreen() {
 
   return (
     <div
-      className="fixed inset-0 overflow-hidden grid grid-rows-[auto_1fr_auto] bg-gradient-to-br from-slate-50 via-white to-emerald-50/30 relative transition-[grid-template-columns] duration-300 ease-in-out"
+      className="fixed inset-0 overflow-hidden grid grid-rows-[auto_1fr_auto] bg-slate-950 relative transition-[grid-template-columns] duration-300 ease-in-out"
       style={{ gridTemplateColumns: isSidebarCollapsed ? "64px 1fr" : "320px 1fr" }}
       {...dragHandlers}
     >
@@ -168,6 +157,8 @@ export default function ChatScreen() {
               onChange={setInput}
               onSend={handleSendMessage}
               onFileSelect={handleFileSelect}
+              hasUploadedFiles={fileUpload.uploadedFiles.length > 0}
+              accept=".pdf,.doc,.docx,.xls,.xlsx"
             />
           </div>
         </div>

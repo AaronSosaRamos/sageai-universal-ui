@@ -53,10 +53,10 @@ function MessageListComponent({ messages, isTyping, isLoadingThread = false }: M
         {memoizedMessages.length === 0 && !isTyping && (
           <div className="flex flex-col items-center justify-center h-full text-center px-4">
             <div className="text-5xl mb-4">💬</div>
-            <h3 className="text-xl font-bold text-gray-800 mb-2">
+            <h3 className="text-xl font-bold text-slate-100 mb-2">
               ¡Comienza una conversación!
             </h3>
-            <p className="text-gray-500">
+            <p className="text-slate-400">
               Escribe un mensaje para comenzar
             </p>
           </div>

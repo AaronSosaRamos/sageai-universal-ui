@@ -1,5 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from "react";
+import api from "@/lib/axios";
 import type { ChatMessage } from "../components/chat/MessageBubble";
+import type { FileInfo } from "../components/chat/FilePreview";
 
 interface UseAssistantChatProps {
   token: string | null;
@@ -117,14 +119,40 @@ export function useAssistantChat({ token, assistantId }: UseAssistantChatProps) 
     }
   }, [threadId, token, assistantId]);
 
-  const sendMessage = useCallback(async (text: string) => {
+  const sendMessage = useCallback(async (text: string, uploadedFiles: FileInfo[] = []) => {
     const trimmed = text.trim();
-    if (!trimmed || !token || !assistantId) return;
+    const uploaded = uploadedFiles.filter((f) => f.status === "uploaded" && f.uploadedPath);
+    if ((!trimmed && uploaded.length === 0) || !token || !assistantId) return;
+
+    const promptLine =
+      trimmed || "Analiza el contenido de los archivos adjuntos y responde según el system prompt del asistente.";
+
+    const fileUrls = uploaded.map((f) => ({
+      url: api.defaults.baseURL + f.uploadedPath!,
+      type: (() => {
+        const name = f.file.name.toLowerCase();
+        if (f.type === "image") return "img";
+        if (f.type === "audio") return "mp3";
+        if (name.endsWith(".pdf")) return "pdf";
+        if (name.endsWith(".docx")) return "docx";
+        if (name.endsWith(".doc")) return "doc";
+        if (name.endsWith(".xlsx")) return "xlsx";
+        if (name.endsWith(".xls")) return "xls";
+        return "other";
+      })(),
+    }));
+
+    const fileInfo =
+      fileUrls.length > 0
+        ? "\n\nFiles:\n" + fileUrls.map((f) => `- ${f.url} (File Type: ${f.type})`).join("\n")
+        : "";
+
+    const fullQuery = promptLine + fileInfo;
 
     const userMessage: ChatMessage = {
       id: crypto.randomUUID(),
       sender: "user",
-      text: trimmed,
+      text: fullQuery,
       timestamp: Date.now(),
     };
     setMessages((prev) => [...prev, userMessage]);
@@ -137,12 +165,18 @@ export function useAssistantChat({ token, assistantId }: UseAssistantChatProps) 
           "Content-Type": "application/json",
           Token: token,
         },
-        body: JSON.stringify({ query: trimmed, assistant_id: assistantId }),
+        body: JSON.stringify({ query: fullQuery, assistant_id: assistantId }),
       });
 
-      const data = await res.json();
+      const data = (await res.json()) as { error?: string; detail?: string; response?: string };
       if (!res.ok) {
-        throw new Error(data.error || data.detail || "Error al enviar mensaje");
+        const msg =
+          (typeof data.detail === "string" && data.detail) ||
+          data.error ||
+          (res.status === 429
+            ? "Has alcanzado el límite diario de interacciones. Vuelve mañana."
+            : "Error al enviar mensaje");
+        throw new Error(msg);
       }
 
       const botMessage: ChatMessage = {
@@ -165,5 +199,5 @@ export function useAssistantChat({ token, assistantId }: UseAssistantChatProps) 
     }
   }, [token, assistantId]);
 
-  return { messages, isTyping, isLoadingThread, sendMessage, reloadMessages };
+  return { messages, setMessages, isTyping, isLoadingThread, sendMessage, reloadMessages };
 }

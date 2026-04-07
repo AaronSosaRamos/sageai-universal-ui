@@ -6,6 +6,7 @@ import { ChatHeader } from "@/app/components/chat/ChatHeader";
 import { ChatFooter } from "@/app/components/chat/ChatFooter";
 import { SystemPromptPreview } from "@/app/components/assistants/SystemPromptPreview";
 import Link from "next/link";
+import { canCreateAssistants } from "@/lib/userType";
 
 interface Assistant {
   id: string;
@@ -106,6 +107,8 @@ export default function AssistantsPage() {
 
   if (!token) return null;
 
+  const allowCreate = canCreateAssistants(token);
+
   return (
     <div className="h-screen bg-gradient-to-br from-slate-50 via-white to-emerald-50/30 flex flex-col overflow-hidden">
       <div className="flex-shrink-0">
@@ -126,13 +129,23 @@ export default function AssistantsPage() {
               <Bot className="w-6 h-6 text-emerald-600" />
               <h1 className="text-2xl font-bold text-gray-900">Asistentes Personalizados</h1>
             </div>
-            <Link
-              href="/assistants/new"
-              className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 flex items-center gap-2"
-            >
-              <Plus className="w-4 h-4" />
-              Nuevo Asistente
-            </Link>
+            <div className="flex items-center gap-2">
+              <Link
+                href="/assistants/catalog"
+                className="px-4 py-2 border border-emerald-600 text-emerald-700 rounded-lg hover:bg-emerald-50 flex items-center gap-2 text-sm font-medium"
+              >
+                Catálogo
+              </Link>
+              {allowCreate && (
+                <Link
+                  href="/assistants/new"
+                  className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 flex items-center gap-2"
+                >
+                  <Plus className="w-4 h-4" />
+                  Nuevo Asistente
+                </Link>
+              )}
+            </div>
           </div>
 
           {error && (
@@ -154,13 +167,15 @@ export default function AssistantsPage() {
             <div className="text-center py-12 border-2 border-dashed border-gray-300 rounded-lg">
               <Bot className="w-12 h-12 text-gray-400 mx-auto mb-4" />
               <p className="text-gray-600 mb-4">No tienes asistentes aún.</p>
-              <Link
-                href="/assistants/new"
-                className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 inline-flex items-center gap-2"
-              >
-                <Plus className="w-4 h-4" />
-                Crear tu primer asistente
-              </Link>
+              {allowCreate && (
+                <Link
+                  href="/assistants/new"
+                  className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 inline-flex items-center gap-2"
+                >
+                  <Plus className="w-4 h-4" />
+                  Crear tu primer asistente
+                </Link>
+              )}
             </div>
           ) : (
             <>

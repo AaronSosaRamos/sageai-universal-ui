@@ -22,7 +22,7 @@ export function SecurityCodeInput({ value, error, onChange }: SecurityCodeInputP
       <label
         htmlFor="security_code"
         className={`block text-xs font-medium mb-1.5 transition-colors ${
-          error ? "text-red-600" : isFocused ? "text-teal-600" : "text-gray-700"
+          error ? "text-red-400" : isFocused ? "text-teal-400" : "text-slate-300"
         }`}
       >
         <div className="flex items-center gap-2">
@@ -41,14 +41,14 @@ export function SecurityCodeInput({ value, error, onChange }: SecurityCodeInputP
           onChange={onChange}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
-          className={`block w-full px-3 py-2 border-2 rounded-xl shadow-sm placeholder-gray-400 
-            focus:outline-none transition-all duration-200 text-sm text-gray-900 uppercase font-mono tracking-widest text-center
+          className={`block w-full px-3 py-2 border-2 rounded-xl shadow-sm placeholder-slate-500
+            focus:outline-none transition-all duration-200 text-sm text-white uppercase font-mono tracking-widest text-center
             ${
               error
-                ? "border-red-300 bg-red-50 focus:border-red-500 focus:ring-red-500"
+                ? "border-red-500/60 bg-red-950/30 focus:border-red-500"
                 : isFocused
-                ? "border-teal-400 bg-teal-50/50 focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20"
-                : "border-gray-200 bg-white hover:border-gray-300 focus:border-teal-400"
+                ? "border-teal-500 bg-slate-700 focus:border-teal-400 focus:ring-2 focus:ring-teal-500/20"
+                : "border-slate-600 bg-slate-700/80 hover:border-slate-500 focus:border-teal-500"
             }`}
           placeholder="ABC123"
           maxLength={6}
@@ -81,7 +81,7 @@ export function SecurityCodeInput({ value, error, onChange }: SecurityCodeInputP
         )}
       </AnimatePresence>
       <motion.p
-        className="mt-2 text-xs text-gray-500 flex items-center gap-1"
+            className="mt-2 text-xs text-slate-500 flex items-center gap-1"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.5 }}

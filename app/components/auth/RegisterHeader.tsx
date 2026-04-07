@@ -17,7 +17,7 @@ export function RegisterHeader({ onBack }: RegisterHeaderProps) {
     >
       <motion.button
         onClick={onBack}
-        className="mb-3 flex items-center text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors group"
+        className="mb-3 flex items-center text-sm font-medium text-slate-400 hover:text-white transition-colors group"
         whileHover={{ x: -4 }}
         whileTap={{ scale: 0.95 }}
       >
@@ -37,10 +37,10 @@ export function RegisterHeader({ onBack }: RegisterHeaderProps) {
       >
         <Image
           src="/logo.png"
-          alt="Logo"
-          width={200}
-          height={60}
-          className="h-10 w-auto drop-shadow-lg"
+          alt="Logo UNCP"
+          width={80}
+          height={80}
+          className="h-20 w-20 drop-shadow-2xl rounded-full"
           priority
         />
       </motion.div>
@@ -55,12 +55,13 @@ export function RegisterHeader({ onBack }: RegisterHeaderProps) {
       </motion.h2>
       
       <motion.p
-        className="mt-1 text-center text-xs text-gray-600"
+        className="mt-1 text-center text-xs text-slate-400"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5, delay: 0.4 }}
       >
-        Crea tu cuenta para comenzar
+        Una cuenta con el formulario de abajo. Para cargar muchos usuarios con Excel, lee el
+        bloque siguiente (solo administradores).
       </motion.p>
     </motion.div>
   );

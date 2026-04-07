@@ -43,7 +43,7 @@ const registerSchema = z.object({
     })
     .refine(value => /[0-9]/.test(value), {
       message: "Debe contener al menos un número"
-    })
+    }),
 });
 
 type RegisterFormData = z.infer<typeof registerSchema>;
@@ -53,7 +53,7 @@ export function RegisterForm({ onRegisterSuccess }: RegisterFormProps) {
     nombre: "",
     apellido: "",
     email: "",
-    password: ""
+    password: "",
   });
   const [errors, setErrors] = useState<Partial<Record<keyof RegisterFormData, string>>>({});
   const [isLoading, setIsLoading] = useState(false);
@@ -107,7 +107,13 @@ export function RegisterForm({ onRegisterSuccess }: RegisterFormProps) {
       const res = await fetch("/api/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        credentials: "include",
+        body: JSON.stringify({
+          nombre: formData.nombre,
+          apellido: formData.apellido,
+          email: formData.email,
+          password: formData.password,
+        }),
       });
 
       const data = await res.json();

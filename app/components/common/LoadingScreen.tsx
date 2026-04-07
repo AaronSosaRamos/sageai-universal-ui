@@ -12,10 +12,10 @@ export function LoadingScreen({
   onRetry 
 }: LoadingScreenProps) {
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-white">
+    <div className="fixed inset-0 flex items-center justify-center bg-slate-950">
       <div className="flex flex-col items-center gap-3">
-        <Loader2 className="w-8 h-8 text-emerald-600 animate-spin" />
-        <p className="text-sm text-slate-600">{message}</p>
+        <Loader2 className="w-8 h-8 text-emerald-400 animate-spin" />
+        <p className="text-sm text-slate-300">{message}</p>
         {showRetryButton && onRetry && (
           <button
             onClick={onRetry}

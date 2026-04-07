@@ -23,7 +23,7 @@ export function AuthButton({
       type={type}
       disabled={isLoading || disabled}
       onClick={onClick}
-      className="group relative w-full flex justify-center items-center py-3 px-4 border border-transparent text-sm font-semibold rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden"
+      className="group relative w-full flex justify-center items-center py-3 px-4 border border-transparent text-sm font-semibold rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800 focus:ring-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden"
       style={{ 
         background: "linear-gradient(135deg, #005E44 0%, #059669 100%)",
       }}

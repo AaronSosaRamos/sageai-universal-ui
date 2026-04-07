@@ -2,6 +2,8 @@ import { useState, useCallback } from "react";
 import type { FileInfo } from "../components/chat/FilePreview";
 import type { ChatMessage } from "../components/chat/MessageBubble";
 
+const MAX_FILE_BYTES = 2 * 1024 * 1024;
+
 interface UseFileUploadProps {
   token: string | null;
   sessionInfo: { session_uuid: string; inner_uuid: string } | null;
@@ -31,6 +33,20 @@ export function useFileUpload({
 
   const handleFiles = useCallback(async (files: File[]) => {
     if (files.length === 0) return;
+
+    const tooBig = files.filter((f) => f.size > MAX_FILE_BYTES);
+    if (tooBig.length > 0) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: crypto.randomUUID(),
+          sender: "bot",
+          text: `Cada archivo debe pesar como máximo 2 MB. Archivos rechazados: ${tooBig.map((f) => f.name).join(", ")}`,
+          timestamp: Date.now(),
+        },
+      ]);
+      return;
+    }
 
     const currentToken = token || sessionStorage.getItem('token');
     let currentSession = sessionInfo;

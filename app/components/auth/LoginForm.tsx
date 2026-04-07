@@ -10,7 +10,6 @@ import { AuthButton } from "../common/AuthButton";
 
 interface LoginFormProps {
   onLoginSuccess: (token: string) => void;
-  onRegister: () => void;
 }
 
 const loginSchema = z.object({
@@ -32,15 +31,15 @@ const loginSchema = z.object({
     })
     .refine(value => /[0-9]/.test(value), {
       message: "Debe contener al menos un número"
-    })
+    }),
 });
 
 type LoginFormData = z.infer<typeof loginSchema>;
 
-export function LoginForm({ onLoginSuccess, onRegister }: LoginFormProps) {
+export function LoginForm({ onLoginSuccess }: LoginFormProps) {
   const [formData, setFormData] = useState<LoginFormData>({
     email: "",
-    password: ""
+    password: "",
   });
   const [errors, setErrors] = useState<Partial<Record<keyof LoginFormData, string>>>({});
   const [isLoading, setIsLoading] = useState(false);
@@ -97,7 +96,6 @@ export function LoginForm({ onLoginSuccess, onRegister }: LoginFormProps) {
         body: JSON.stringify({
           email: formData.email,
           password: formData.password,
-          secret_value: process.env.NEXT_PUBLIC_BACKEND_SECRET_VALUE
         }),
       });
 
@@ -190,25 +188,6 @@ export function LoginForm({ onLoginSuccess, onRegister }: LoginFormProps) {
           </AuthButton>
         </motion.div>
 
-        <motion.div
-          className="text-center"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.4, delay: 0.6 }}
-        >
-          <motion.button
-            type="button"
-            onClick={onRegister}
-            className="text-sm text-emerald-600 hover:text-emerald-700 font-medium transition-colors"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            ¿No tienes cuenta?{" "}
-            <span className="underline decoration-2 underline-offset-2">
-              Regístrate aquí
-            </span>
-          </motion.button>
-        </motion.div>
       </div>
     </motion.form>
   );

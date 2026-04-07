@@ -3,9 +3,20 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { User, LogOut, Settings, Bell, MessageSquare, Bot } from "lucide-react";
+import {
+  User,
+  LogOut,
+  Settings,
+  Bell,
+  MessageSquare,
+  Bot,
+  Library,
+  FileSpreadsheet,
+  LayoutDashboard,
+} from "lucide-react";
 import { jwtDecode } from "jwt-decode";
 import { useMemo } from "react";
+import { getUserTypeFromToken } from "@/lib/userType";
 
 interface ChatHeaderProps {
   token: string;
@@ -21,6 +32,8 @@ export function ChatHeader({ token }: ChatHeaderProps) {
       return 'Usuario';
     }
   }, [token]);
+
+  const isAdmin = useMemo(() => getUserTypeFromToken(token) === "admin", [token]);
 
   const handleLogout = () => {
     sessionStorage.removeItem('token');
@@ -40,10 +53,10 @@ export function ChatHeader({ token }: ChatHeaderProps) {
           <Link href="/" className="flex items-center gap-3 hover:opacity-90 transition-opacity">
             <Image
               src="/logo.png"
-              alt="Logo"
-              width={140}
-              height={42}
-              className="h-9 w-auto object-contain drop-shadow-lg"
+              alt="Logo UNCP"
+              width={40}
+              height={40}
+              className="h-10 w-10 object-contain drop-shadow-lg rounded-full"
               priority
             />
             <div className="leading-tight hidden sm:block">
@@ -65,14 +78,49 @@ export function ChatHeader({ token }: ChatHeaderProps) {
               <span className="text-sm font-medium">Chat</span>
             </Link>
             <Link
+              href="/assistants/catalog"
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
+                pathname === "/assistants/catalog" ? "bg-white/20" : "hover:bg-white/10"
+              }`}
+            >
+              <Library className="w-4 h-4" />
+              <span className="text-sm font-medium">Catálogo</span>
+            </Link>
+            <Link
               href="/assistants"
               className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
-                pathname?.startsWith("/assistants") ? "bg-white/20" : "hover:bg-white/10"
+                pathname?.startsWith("/assistants") && pathname !== "/assistants/catalog"
+                  ? "bg-white/20"
+                  : "hover:bg-white/10"
               }`}
             >
               <Bot className="w-4 h-4" />
-              <span className="text-sm font-medium">Asistentes</span>
+              <span className="text-sm font-medium">Mis asistentes</span>
             </Link>
+            {isAdmin && (
+              <>
+                <Link
+                  href="/admin/dashboard"
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
+                    pathname?.startsWith("/admin/dashboard") ? "bg-white/20" : "hover:bg-white/10"
+                  }`}
+                  title="Métricas y actividad"
+                >
+                  <LayoutDashboard className="w-4 h-4 shrink-0" />
+                  <span className="text-sm font-medium hidden xl:inline">Panel</span>
+                </Link>
+                <Link
+                  href="/admin/import-users"
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
+                    pathname === "/admin/import-users" ? "bg-white/20" : "hover:bg-white/10"
+                  }`}
+                  title="Plantilla Excel y carga masiva de usuarios"
+                >
+                  <FileSpreadsheet className="w-4 h-4 shrink-0" />
+                  <span className="text-sm font-medium hidden xl:inline">Importar</span>
+                </Link>
+              </>
+            )}
           </nav>
         </div>
         

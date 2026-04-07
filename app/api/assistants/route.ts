@@ -11,10 +11,11 @@ export async function GET(req: NextRequest) {
     const searchParams = req.nextUrl.searchParams;
     const page = parseInt(searchParams.get("page") || "1", 10);
     const limit = parseInt(searchParams.get("limit") || "10", 10);
-    
+    const scope = searchParams.get("scope") || "mine";
+
     const res = await api.get("/assistants", {
-      params: { page, limit },
-      headers: { Token: token }
+      params: { page, limit, scope },
+      headers: { Token: token },
     });
     return NextResponse.json(res.data);
   } catch (e: unknown) {

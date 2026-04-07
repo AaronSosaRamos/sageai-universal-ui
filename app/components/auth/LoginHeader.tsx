@@ -17,10 +17,10 @@ export function LoginHeader() {
       >
         <Image
           src="/logo.png"
-          alt="Logo"
-          width={200}
-          height={60}
-          className="h-12 w-auto drop-shadow-lg"
+          alt="Logo UNCP"
+          width={100}
+          height={100}
+          className="h-24 w-24 drop-shadow-2xl rounded-full"
           priority
         />
       </motion.div>
@@ -33,7 +33,7 @@ export function LoginHeader() {
         Iniciar Sesión
       </motion.h2>
       <motion.p
-        className="mt-2 text-center text-sm text-gray-600"
+        className="mt-2 text-center text-sm text-slate-400"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5, delay: 0.4 }}
