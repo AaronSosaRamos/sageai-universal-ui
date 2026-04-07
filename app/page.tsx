@@ -62,7 +62,7 @@ export default function ChatScreen() {
     await sendMessage(trimmed, fileUpload.uploadedFiles);
     setInput("");
     await fileUpload.clearAllFiles();
-  }, [input, sendMessage, fileUpload.uploadedFiles, fileUpload]);
+  }, [input, sendMessage, fileUpload]);
 
   const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);

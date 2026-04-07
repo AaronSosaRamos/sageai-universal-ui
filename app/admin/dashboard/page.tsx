@@ -5,7 +5,7 @@ import Link from "next/link";
 import {
   ArrowLeft, BarChart3, BookOpen, Bot, Clock, Cpu, FileSpreadsheet,
   GraduationCap, KeyRound, Layers, Scale, ShieldCheck, Sparkles,
-  TrendingUp, Upload, Users, Zap,
+  TrendingUp, Users, Zap,
 } from "lucide-react";
 import {
   ResponsiveContainer,
@@ -104,10 +104,6 @@ const CAT_COLORS: Record<string, string> = {
 // ─── Formatters ───────────────────────────────────────────────────────────────
 
 function fInt(n: number) { return new Intl.NumberFormat("es-PE").format(n); }
-function fUsd(n: number) {
-  if (n === 0) return "—";
-  return new Intl.NumberFormat("es-PE", { style: "currency", currency: "USD", minimumFractionDigits: 2, maximumFractionDigits: 6 }).format(n);
-}
 function fPct(x: number | null | undefined, digits = 1) {
   if (x == null || Number.isNaN(x)) return "—";
   return `${(x * 100).toFixed(digits)} %`;
@@ -235,33 +231,6 @@ function TokenTrendChart({ data }: { data: TokenDay[] }) {
   );
 }
 
-// ─── Chart: Funnel ────────────────────────────────────────────────────────────
-
-function LearningFunnelChart({ data }: { data: { step: string; count: number }[] }) {
-  const max = Math.max(...data.map(d => d.count), 1);
-  const funnelColors = [COLORS.emerald, COLORS.teal, COLORS.cyan, COLORS.violet, COLORS.amber, COLORS.rose];
-  return (
-    <div className="space-y-2.5 pt-1">
-      {data.map((d, i) => {
-        const pct = d.count / max;
-        const prev = i > 0 ? data[i - 1].count : d.count;
-        const conv = prev > 0 && i > 0 ? (d.count / prev) * 100 : null;
-        return (
-          <div key={d.step}>
-            <div className="flex justify-between text-xs text-slate-400 mb-1">
-              <span>{d.step}</span>
-              <span className="text-white font-semibold">{fInt(d.count)}{conv != null && <span className="text-slate-500 ml-2 font-normal">{conv.toFixed(0)} %↓</span>}</span>
-            </div>
-            <div className="h-5 rounded-md overflow-hidden bg-slate-800" style={{ margin: `0 ${((1 - pct) * 18).toFixed(1)}%` }}>
-              <div className="h-full rounded-md transition-all" style={{ width: `${pct * 100}%`, backgroundColor: funnelColors[i % funnelColors.length], opacity: 0.85 }} />
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
 // ─── Chart: User activity distribution ────────────────────────────────────────
 
 function UserHistogramChart({ data }: { data: { range: string; users: number }[] }) {
@@ -384,7 +353,12 @@ function SystemRadarChart({ data }: { data: DashboardData }) {
         <PolarAngleAxis dataKey="metric" tick={{ fontSize: 10, fill: "#94a3b8" }} />
         <PolarRadiusAxis tick={false} axisLine={false} domain={[0, 100]} />
         <Radar name="Sistema" dataKey="value" stroke={COLORS.emerald} fill={COLORS.emerald} fillOpacity={0.25} strokeWidth={2} />
-        <Tooltip {...ChartTooltipStyle} formatter={(v: number) => `${v.toFixed(1)} pts`} />
+        <Tooltip
+          {...ChartTooltipStyle}
+          formatter={(value) =>
+            typeof value === "number" ? `${value.toFixed(1)} pts` : String(value ?? "")
+          }
+        />
       </RadarChart>
     </ResponsiveContainer>
   );
@@ -451,7 +425,12 @@ function PersonalizationTreemap({ data }: { data: Record<string, number> }) {
     <ResponsiveContainer width="100%" height={200}>
       <Treemap data={items} dataKey="size" aspectRatio={4 / 2} stroke="#0f172a" isAnimationActive={false}>
         {items.map((entry, i) => <Cell key={i} fill={entry.fill} opacity={0.82} />)}
-        <Tooltip {...ChartTooltipStyle} formatter={(v: number) => fInt(v)} />
+        <Tooltip
+          {...ChartTooltipStyle}
+          formatter={(value) =>
+            typeof value === "number" ? fInt(value) : String(value ?? "")
+          }
+        />
       </Treemap>
     </ResponsiveContainer>
   );
