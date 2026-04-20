@@ -13,10 +13,12 @@ import {
   Library,
   FileSpreadsheet,
   LayoutDashboard,
+  ClipboardCheck,
 } from "lucide-react";
 import { jwtDecode } from "jwt-decode";
 import { useMemo } from "react";
 import { getUserTypeFromToken } from "@/lib/userType";
+import { clearClientAuthAndGoLogin } from "@/lib/authSession";
 
 interface ChatHeaderProps {
   token: string;
@@ -36,9 +38,7 @@ export function ChatHeader({ token }: ChatHeaderProps) {
   const isAdmin = useMemo(() => getUserTypeFromToken(token) === "admin", [token]);
 
   const handleLogout = () => {
-    sessionStorage.removeItem('token');
-    sessionStorage.removeItem('sessionInfo');
-    window.location.reload();
+    clearClientAuthAndGoLogin();
   };
 
   return (
@@ -85,6 +85,15 @@ export function ChatHeader({ token }: ChatHeaderProps) {
             >
               <Library className="w-4 h-4" />
               <span className="text-sm font-medium">Catálogo</span>
+            </Link>
+            <Link
+              href="/evaluations"
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
+                pathname?.startsWith("/evaluations") ? "bg-white/20" : "hover:bg-white/10"
+              }`}
+            >
+              <ClipboardCheck className="w-4 h-4" />
+              <span className="text-sm font-medium">Evaluaciones</span>
             </Link>
             <Link
               href="/assistants"

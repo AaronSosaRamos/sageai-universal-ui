@@ -19,3 +19,8 @@ export function getUserTypeFromToken(token: string | null): AppUserType {
 export function canCreateAssistants(token: string | null): boolean {
   return getUserTypeFromToken(token) === "admin";
 }
+
+/** Crear, editar y listar "mis evaluaciones" (solo administradores). */
+export function canManageEvaluations(token: string | null): boolean {
+  return getUserTypeFromToken(token) === "admin";
+}

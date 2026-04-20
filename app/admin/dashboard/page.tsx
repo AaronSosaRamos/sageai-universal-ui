@@ -3,9 +3,9 @@
 import { useState, useEffect, useCallback, useMemo, type ReactNode } from "react";
 import Link from "next/link";
 import {
-  ArrowLeft, BarChart3, BookOpen, Bot, Clock, Cpu, FileSpreadsheet,
-  GraduationCap, KeyRound, Layers, Scale, ShieldCheck, Sparkles,
-  TrendingUp, Users, Zap,
+  ArrowLeft, BarChart3, BookOpen, Bot, ChevronDown, Clock, ClipboardCheck,
+  Cpu, FileSpreadsheet, GraduationCap, KeyRound, Layers, Scale, ShieldCheck,
+  Sparkles, TrendingUp, Users, Zap,
 } from "lucide-react";
 import {
   ResponsiveContainer,
@@ -23,6 +23,10 @@ import {
 import { ChatHeader } from "@/app/components/chat/ChatHeader";
 import { ChatFooter } from "@/app/components/chat/ChatFooter";
 import { getUserTypeFromToken } from "@/lib/userType";
+import {
+  EvaluationAnalytics,
+  type AnalyticsData,
+} from "@/app/components/evaluations/EvaluationAnalytics";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -518,6 +522,116 @@ function RechartsFunnel({ data }: { data: { step: string; count: number }[] }) {
   );
 }
 
+// ─── Evaluations analytics section ────────────────────────────────────────────
+
+interface BulkEvalItem {
+  evaluation_id: string;
+  title: string;
+  published: boolean;
+  created_at: string;
+  analytics: AnalyticsData;
+}
+
+function EvaluationsDashboardSection({ token }: { token: string }) {
+  const [bulk, setBulk] = useState<{ items: BulkEvalItem[] } | null>(null);
+  const [evLoading, setEvLoading] = useState(true);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      setEvLoading(true);
+      try {
+        const res = await fetch("/api/admin/evaluations/analytics", { headers: { Token: token } });
+        if (!res.ok) return;
+        const json = await res.json();
+        const items = (json.items ?? []) as BulkEvalItem[];
+        setBulk({ items });
+        setSelectedId((prev) => {
+          if (items.length === 0) return null;
+          if (prev && items.some((i) => i.evaluation_id === prev)) return prev;
+          return items[0].evaluation_id;
+        });
+      } catch { /* ignore */ }
+      finally { setEvLoading(false); }
+    })();
+  }, [token]);
+
+  const evals = bulk?.items ?? [];
+  const selected = evals.find((e) => e.evaluation_id === selectedId);
+  const prefetchedAnalytics = selected?.analytics ?? null;
+
+  return (
+    <Section
+      id="evaluaciones"
+      icon={<ClipboardCheck className="w-4 h-4" />}
+      title="18 · Panel de rendimiento en evaluaciones"
+      subtitle="Métricas y charts de todos los intentos por evaluación. Filtra por estudiante para ver su perfil individual."
+      wide
+    >
+      {/* Evaluation picker */}
+      <div className="mb-5 flex flex-col sm:flex-row sm:items-center gap-3">
+        <span className="text-xs text-slate-500 shrink-0">Evaluación:</span>
+        {evLoading ? (
+          <div className="h-9 w-60 rounded-xl bg-slate-800 animate-pulse" />
+        ) : evals.length === 0 ? (
+          <p className="text-xs text-slate-500">No hay evaluaciones creadas todavía.</p>
+        ) : (
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setOpen((o) => !o)}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-700 bg-slate-900 text-sm text-slate-200 hover:bg-slate-800 transition-colors min-w-[260px] max-w-xs"
+            >
+              <ClipboardCheck className="w-4 h-4 text-emerald-500 shrink-0" />
+              <span className="flex-1 text-left truncate">
+                {selected?.title ?? "Selecciona una evaluación"}
+              </span>
+              {selected && (
+                <span className={`text-[10px] px-1.5 py-0.5 rounded-full shrink-0 ${selected.published ? "bg-emerald-900/60 text-emerald-400" : "bg-amber-900/60 text-amber-400"}`}>
+                  {selected.published ? "Publicada" : "Borrador"}
+                </span>
+              )}
+              <ChevronDown className={`w-4 h-4 shrink-0 transition-transform ${open ? "rotate-180" : ""}`} />
+            </button>
+            {open && (
+              <div className="absolute z-50 mt-1 w-80 rounded-xl border border-slate-700 bg-slate-900 shadow-2xl overflow-hidden">
+                <div className="max-h-64 overflow-y-auto">
+                  {evals.map((ev) => (
+                    <button
+                      key={ev.evaluation_id}
+                      type="button"
+                      onClick={() => { setSelectedId(ev.evaluation_id); setOpen(false); }}
+                      className={`w-full text-left px-4 py-2.5 text-sm hover:bg-slate-800 flex items-center gap-2 ${ev.evaluation_id === selectedId ? "bg-slate-800/60" : ""}`}
+                    >
+                      <span className="flex-1 truncate text-slate-200">{ev.title}</span>
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded-full shrink-0 ${ev.published ? "bg-emerald-900/60 text-emerald-400" : "bg-amber-900/60 text-amber-400"}`}>
+                        {ev.published ? "Pub." : "Bor."}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Analytics: datos incluidos en la respuesta bulk (sin GET por evaluación) */}
+      {selectedId && prefetchedAnalytics ? (
+        <EvaluationAnalytics
+          key={selectedId}
+          evaluationId={selectedId}
+          token={token}
+          prefetchedAnalytics={prefetchedAnalytics}
+        />
+      ) : (
+        !evLoading && <p className="text-xs text-slate-600 py-8 text-center">Selecciona una evaluación para ver sus métricas.</p>
+      )}
+    </Section>
+  );
+}
+
 // ─── Main page ────────────────────────────────────────────────────────────────
 
 export default function AdminDashboardPage() {
@@ -777,6 +891,9 @@ export default function AdminDashboardPage() {
               </div>
             </Section>
           </div>
+
+          {/* ── Row 9: Evaluaciones ── */}
+          {token && <EvaluationsDashboardSection token={token} />}
 
           {/* Definitions accordion-style */}
           {data.academic?.definitions && (

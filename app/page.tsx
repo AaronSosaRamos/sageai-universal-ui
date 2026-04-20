@@ -31,6 +31,15 @@ export default function ChatScreen() {
     }
   }, []);
 
+  useEffect(() => {
+    if (!isMounted || !token) return;
+    const next = sessionStorage.getItem("redirectAfterLogin");
+    if (next) {
+      sessionStorage.removeItem("redirectAfterLogin");
+      window.location.href = next;
+    }
+  }, [isMounted, token]);
+
   // Initialize session with current thread
   const { sessionInfo, setSessionInfo, isInitializing, changeThread } = useSession(token, currentThreadId);
 
